@@ -23,8 +23,8 @@ license = {file = "LICENSE"}
 dynamic = ["version"]
 dependencies = [
   "numpy",
-  "pymc>=6.1.0,<6.2",
-  "pytensor>=3.1.2,<3.2"
+  "pymc>=6.2.0,<6.3",
+  "pytensor>=3.2.3,<3.3"
 ]
 
 [project.optional-dependencies]

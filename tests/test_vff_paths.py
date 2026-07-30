@@ -103,10 +103,10 @@ def test_no_dense_cholesky_on_Kuu():
     fmean, fvar = svgp.predict_marginal(X_sym)
     fn = pytensor.function([X_sym], [fmean, fvar])
     fg = fn.maker.fgraph
-    shape_of = fg.shape_feature.shape_of
+    shape_feature = fg.shape_feature
     for node in fg.toposort():
         if node.op.__class__.__name__ == "Cholesky":
-            in_shape = shape_of[node.inputs[0]]
+            in_shape = shape_feature.shape_tuple(node.inputs[0])
             resolved = tuple(int(s.data) if hasattr(s, "data") else None for s in in_shape)
             assert resolved != (M, M), f"dense MxM Cholesky on Kuu at {node}"
 
