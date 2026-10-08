@@ -13,7 +13,7 @@ import pytensor
 import pytensor.tensor as pt
 
 from pytensor.graph.replace import graph_replace
-from pytensor_ml.optim import Steps, adam, compile_train
+from pytensor_ml.optim import Gradients, Steps, adam, compile_train
 
 from ptgp.objectives import vfe_diagnostics
 
@@ -278,7 +278,14 @@ def _grouped_updates(optimizers, param_groups, shared_params, extra_vars, shared
                 )
             group_of[var] = name
             resolved.append(sym_to_shared[var])
-        merged.update(optimizers[name](loss, resolved))
+
+        updates = optimizers[name](loss, resolved)
+        if isinstance(updates, Gradients):
+            raise ValueError(
+                f"The transform for group {name!r} returned gradients rather than steps. "
+                f"Put a rule such as adam(1e-3) in the group's chain."
+            )
+        merged.update(updates)
 
     return Steps(merged)
 

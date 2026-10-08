@@ -9,7 +9,7 @@ import pymc as pm
 import pytensor.tensor as pt
 import pytest
 
-from pytensor_ml.optim import adam, exponential_schedule, sgd
+from pytensor_ml.optim import adam, clip_by_global_norm, exponential_schedule, sgd
 from pytensor_ml.params import StepCounter
 
 import ptgp as pg
@@ -120,6 +120,24 @@ class TestGroupValidation:
                 model=model,
                 optimizer={"kernel": adam(1e-2)},
                 param_groups={"kernel": [ls_vv]},
+            )
+
+    def test_gradients_only_group_raises(self, gp_setup):
+        """A clip alone produces gradients, not steps. Compiling it would train uphill."""
+        _, _, model, gp, X_var, y_var = gp_setup
+        ls_vv = model.rvs_to_values[model["ls"]]
+        eta_vv = model.rvs_to_values[model["eta"]]
+        sigma_vv = model.rvs_to_values[model["sigma"]]
+
+        with pytest.raises(ValueError, match="returned gradients rather than steps"):
+            pg.optim.compile_training_step(
+                _mll,
+                gp,
+                X_var,
+                y_var,
+                model=model,
+                optimizer={"kernel": adam(1e-2), "noise": clip_by_global_norm(1.0)},
+                param_groups={"kernel": [ls_vv, eta_vv], "noise": [sigma_vv]},
             )
 
 
